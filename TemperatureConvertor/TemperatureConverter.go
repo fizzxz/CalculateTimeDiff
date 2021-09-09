@@ -12,7 +12,7 @@ func main() {
 	fmt.Println(" ")
 	var fahrVal float64 = 0
 	celciusConvFromFahr := tempConvFromFahrenheitToCelcius(fahrVal)
-	kelvinConvFromFahr := tempConvFromKelvinToFahrenheit(fahrVal)
+	kelvinConvFromFahr := tempConvFromFahrenheitToKelvin(fahrVal)
 	fmt.Println("Original Fahrenheit Value: " + fmt.Sprint(fahrVal))
 	fmt.Println("Celcius Value: " + fmt.Sprint(celciusConvFromFahr))
 	fmt.Println("Kelvin Value: " + fmt.Sprint(kelvinConvFromFahr))
