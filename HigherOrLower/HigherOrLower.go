@@ -44,7 +44,7 @@ func higherOrLower() int {
 	if number < prevNum {
 		if usersChoice == "+" {
 			fmt.Println("You lose")
-			return -1
+			return 0
 		} else if usersChoice == "-" {
 			fmt.Println("You Win")
 			return 1
@@ -55,7 +55,7 @@ func higherOrLower() int {
 			return 1
 		} else if usersChoice == "-" {
 			fmt.Println("You lose")
-			return -1
+			return 0
 		}
 	} else if number == prevNum {
 		fmt.Println("The random number generated is equal to the previous number, try again!")
