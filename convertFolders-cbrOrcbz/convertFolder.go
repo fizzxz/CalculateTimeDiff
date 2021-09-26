@@ -23,11 +23,46 @@ const (
 
 func main() {
 	rootDir := "D:/TestFolder"
-	findDirToArchive(rootDir, "cbz", fastZipCompression)
+
+	// Enter the root directory
+	// for where the sub directories
+	// of the image folders are located.
+
+	// Also choose wheter the conversion
+	// should be to cbz or cbr
+
+	//Compression types,
+	//either fz(fastZipCompression)
+	//or gz (glZipCompression)
+	//default for cbz will be fz because it is faster
+	// and better implemented into this project.
+	findDirToArchive(rootDir, "cbz", "")
 	// findDirToArchive(rootDir, "cbz", glZipCompression)
 }
 
 func findDirToArchive(rootDir, archiveType, zipTypeCompression string) {
+
+	//Default to the faster zip conversion
+	if zipTypeCompression == fastZipCompression ||
+		zipTypeCompression == "" {
+		//fastzip and godirwalk
+		// using a ryzen 3700x
+		// can convert 1,150 Files, 58 Folders (1.04GB) in 2.6 seconds
+		subDirs := walkDir_FindSubDirs(rootDir)
+		_, subDirs = subDirs[0], subDirs[1:]
+
+		for _, subDir := range subDirs {
+			foundImagesOSFiles := walkDir_FindImages(subDir)
+			filesOS := getOsFile(foundImagesOSFiles)
+			if len(filesOS) > 0 {
+				if zipArchiveDir_FastZip(subDir, filesOS) {
+					cbzDir := subDir + ".cbz"
+					zipDir := subDir + ".zip"
+					os.Rename(zipDir, cbzDir)
+				}
+			}
+		}
+	}
 
 	if archiveType == "cbz" {
 		// Golang archive/zip and walk
@@ -45,27 +80,9 @@ func findDirToArchive(rootDir, archiveType, zipTypeCompression string) {
 					cbzDir := dirConv + ".cbz"
 					os.Rename(dirConv+".zip", cbzDir)
 				} else {
+					//Remove the created empty zip file
+					//when a failed conversion occurs
 					os.Remove(dirConv + ".zip")
-				}
-			}
-		}
-
-		if zipTypeCompression == fastZipCompression {
-			//fastzip and godirwalk
-			// using a ryzen 3700x it
-			// can convert 1,150 Files, 58 Folders (1.04GB) in 2.6 seconds
-			subDirs := walkDir_FindSubDirs(rootDir)
-			_, subDirs = subDirs[0], subDirs[1:]
-
-			for _, subDir := range subDirs {
-				foundImagesOSFiles := walkDir_FindImages(subDir)
-				filesOS := getOsFile(foundImagesOSFiles)
-				if len(filesOS) > 0 {
-					if zipArchiveDir_FastZip(subDir, filesOS) {
-						cbzDir := subDir + ".cbz"
-						zipDir := subDir + ".zip"
-						os.Rename(zipDir, cbzDir)
-					}
 				}
 			}
 		}
@@ -189,8 +206,9 @@ func zipArchiveDir(rootDir string) bool {
 
 		// Create a new zip archive.
 		w := zip.NewWriter(outFile)
-		addFilesErr := addFiles(w, rootDir, "")
+
 		// Add some files to the archive.
+		addFilesErr := addFiles(w, rootDir, "")
 
 		if err != nil {
 			fmt.Println(err)
@@ -199,8 +217,10 @@ func zipArchiveDir(rootDir string) bool {
 
 		// Make sure to check the error on Close.
 		err = w.Close()
-		if addFilesErr != nil {
 
+		//If an error occurs adding files,
+		// return false
+		if addFilesErr != nil {
 			return false
 		}
 		if err != nil {
@@ -221,7 +241,7 @@ func addFiles(w *zip.Writer, basePath, baseInZip string) error {
 	}
 
 	for _, file := range files {
-		// fmt.Println(basePath + "/" + file.Name())
+
 		if !file.IsDir() {
 
 			if strings.Contains(file.Name(), ".jpg") ||
