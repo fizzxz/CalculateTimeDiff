@@ -28,19 +28,16 @@ func main() {
 	// for where the sub directories
 	// of the image folders are located.
 
-	// Also choose wheter the conversion
-	// should be to cbz or cbr
-
 	//Compression types,
 	//either fz(fastZipCompression)
 	//or gz (glZipCompression)
 	//default for cbz will be fz because it is faster
 	// and better implemented into this project.
-	findDirToArchive(rootDir, "cbz", "")
+	findDirToArchive(rootDir, "")
 	// findDirToArchive(rootDir, "cbz", glZipCompression)
 }
 
-func findDirToArchive(rootDir, archiveType, zipTypeCompression string) {
+func findDirToArchive(rootDir, zipTypeCompression string) {
 
 	//Default to the faster zip conversion
 	if zipTypeCompression == fastZipCompression ||
@@ -64,26 +61,24 @@ func findDirToArchive(rootDir, archiveType, zipTypeCompression string) {
 		}
 	}
 
-	if archiveType == "cbz" {
-		// Golang archive/zip and walk
-		// using a ryzen 3700x
-		// can convert 1,150 Files, 58 Folders (1.04GB) in 30 seconds
-		if zipTypeCompression == glZipCompression {
+	// Golang archive/zip and walk
+	// using a ryzen 3700x
+	// can convert 1,150 Files, 58 Folders (1.04GB) in 30 seconds
+	if zipTypeCompression == glZipCompression {
 
-			subDirs := walkDir_FindSubDirs(rootDir)
-			_, subDirs = subDirs[0], subDirs[1:]
+		subDirs := walkDir_FindSubDirs(rootDir)
+		_, subDirs = subDirs[0], subDirs[1:]
 
-			for _, subDir := range subDirs {
+		for _, subDir := range subDirs {
 
-				dirConv := convDir(subDir)
-				if zipArchiveDir(dirConv) {
-					cbzDir := dirConv + ".cbz"
-					os.Rename(dirConv+".zip", cbzDir)
-				} else {
-					//Remove the created empty zip file
-					//when a failed conversion occurs
-					os.Remove(dirConv + ".zip")
-				}
+			dirConv := convDir(subDir)
+			if zipArchiveDir(dirConv) {
+				cbzDir := dirConv + ".cbz"
+				os.Rename(dirConv+".zip", cbzDir)
+			} else {
+				//Remove the created empty zip file
+				//when a failed conversion occurs
+				os.Remove(dirConv + ".zip")
 			}
 		}
 	}
