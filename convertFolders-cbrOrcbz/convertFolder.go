@@ -1,14 +1,12 @@
 package main
 
 import (
-	// "archive/zip"
+	"archive/zip"
 	"context"
 	"fmt"
-
+	"io/fs"
+	"io/ioutil"
 	"os"
-
-	// "path/filepath"
-	// "fmt"
 	"strings"
 
 	"github.com/karrick/godirwalk"
@@ -16,48 +14,100 @@ import (
 	"github.com/saracen/fastzip"
 )
 
-// var filesOS = make(map[string]os.FileInfo)
+var err error
 
-// Zips "./input" into "./output.zip"
+const (
+	fastZipCompression = "fz"
+	glZipCompression   = "gz"
+)
+
 func main() {
-
-	// archiveDir := "D:\\TestFolder\\archive.zip"
-	rootDir := "D:\\TestFolder\\"
-	findDirToArchive(rootDir, "cbz")
+	rootDir := "D:/TestFolder"
+	findDirToArchive(rootDir, "cbz", fastZipCompression)
+	// findDirToArchive(rootDir, "cbz", glZipCompression)
 }
 
-func findDirToArchive(rootDir string, archiveType string) {
-	subDirs := walkDir_FindSubDirs(rootDir)
-	for _, subDir := range subDirs {
-		zipArchiveDir(subDir)
+func findDirToArchive(rootDir, archiveType, zipTypeCompression string) {
+
+	if archiveType == "cbz" {
+		// Golang archive/zip and walk
+		// using a ryzen 3700x
+		// can convert 1,150 Files, 58 Folders (1.04GB) in 30 seconds
+		if zipTypeCompression == glZipCompression {
+
+			subDirs := walkDir_FindSubDirs(rootDir)
+			_, subDirs = subDirs[0], subDirs[1:]
+
+			for _, subDir := range subDirs {
+
+				dirConv := convDir(subDir)
+				if zipArchiveDir(dirConv) {
+					cbzDir := dirConv + ".cbz"
+					os.Rename(dirConv+".zip", cbzDir)
+				} else {
+					os.Remove(dirConv + ".zip")
+				}
+			}
+		}
+
+		if zipTypeCompression == fastZipCompression {
+			//fastzip and godirwalk
+			// using a ryzen 3700x it
+			// can convert 1,150 Files, 58 Folders (1.04GB) in 2.6 seconds
+			subDirs := walkDir_FindSubDirs(rootDir)
+			_, subDirs = subDirs[0], subDirs[1:]
+
+			for _, subDir := range subDirs {
+				foundImagesOSFiles := walkDir_FindImages(subDir)
+				filesOS := getOsFile(foundImagesOSFiles)
+				if len(filesOS) > 0 {
+					if zipArchiveDir_FastZip(subDir, filesOS) {
+						cbzDir := subDir + ".cbz"
+						zipDir := subDir + ".zip"
+						os.Rename(zipDir, cbzDir)
+					}
+				}
+			}
+		}
 	}
 
 }
 
-func zipArchiveDir(rootDir string) {
+func zipArchiveDir_FastZip(rootDir string, filesOS map[string]os.FileInfo) bool {
 	// Create archive file
-	w, err := os.Create(rootDir + ".zip")
-	if err != nil {
-		panic(err)
-	}
-	defer w.Close()
+	zipDir := rootDir + ".zip"
 
-	// Create new Archiver
-	a, err := fastzip.NewArchiver(w, rootDir)
-	if err != nil {
-		panic(err)
-	}
-	defer a.Close()
+	if _, err := os.Stat(zipDir); os.IsNotExist(err) {
 
-	foundImagesOSFiles := walkDir_FindImages(rootDir)
-	filesOS := getOsFile(foundImagesOSFiles)
-	// Register a non-default level compressor if required
-	// a.RegisterCompressor(zip.Deflate, fastzip.FlateCompressor(1))
+		w, err := os.Create(zipDir)
+		if err != nil {
+			panic(err)
+		}
+		defer w.Close()
 
-	// Archive
-	if err = a.Archive(context.Background(), filesOS); err != nil {
-		panic(err)
+		// Create new Archiver
+		a, err := fastzip.NewArchiver(w, rootDir, fastzip.WithArchiverConcurrency(1))
+		if err != nil {
+			panic(err)
+
+		}
+
+		defer a.Close()
+
+		// Register a non-default level compressor if required
+		a.RegisterCompressor(zip.Deflate, fastzip.FlateCompressor(5))
+
+		// Archive
+		if err = a.Archive(context.Background(), filesOS); err != nil {
+			panic(err)
+
+		}
+
+		return true
+	} else {
+		return false
 	}
+
 }
 
 func walkDir_FindSubDirs(rootDir string) []string {
@@ -72,7 +122,6 @@ func walkDir_FindSubDirs(rootDir string) []string {
 			}
 			dir = append(dir, osPathname)
 
-			// fmt.Printf(" %s\n", osPathname)
 			return nil
 		},
 		Unsorted: true, // (optional) set true for faster yet non-deterministic enumeration (see godoc)
@@ -87,20 +136,22 @@ func walkDir_FindImages(rootDir string) []string {
 	// Walk directory, adding the files we want to add
 
 	var files []string
+	dirLevel := strings.Count(rootDir, "\\")
 	err := godirwalk.Walk(rootDir, &godirwalk.Options{
-		Callback: func(osPathname string, de *godirwalk.Dirent) error {
+		Callback: func(subPathname string, de *godirwalk.Dirent) error {
 			// Following string operation is not most performant way
 			// of doing this, but common enough to warrant a simple
 			// example here:
-			if strings.Contains(osPathname, ".jpg") ||
-				strings.Contains(osPathname, ".jpeg") ||
-				strings.Contains(osPathname, ".png") ||
-				strings.Contains(osPathname, ".webp") {
-				files = append(files, osPathname)
+			subDirVal := strings.Count(subPathname, "\\")
+			if dirLevel == subDirVal-1 {
+				if strings.Contains(subPathname, ".jpg") ||
+					strings.Contains(subPathname, ".jpeg") ||
+					strings.Contains(subPathname, ".png") ||
+					strings.Contains(subPathname, ".webp") {
+					files = append(files, subPathname)
+				}
 			}
 
-			// return godirwalk.SkipThis
-			// fmt.Printf(" %s\n", osPathname)
 			return nil
 		},
 		Unsorted: true, // (optional) set true for faster yet non-deterministic enumeration (see godoc)
@@ -109,19 +160,117 @@ func walkDir_FindImages(rootDir string) []string {
 		fmt.Print(err)
 	}
 	return files
-	// filepath.Walk(sourceDir, func(pathname string, info os.FileInfo, err error) error {
-	// 	files[pathname] = info
-	// 	return nil
-	// })
+
 }
 
 func getOsFile(files []string) map[string]os.FileInfo {
 	filesOS := make(map[string]os.FileInfo)
+
 	for _, file := range files {
-		filesOS[file], _ = os.Stat(file)
-		// if err != nil {
-		// 	fmt.Print(err)
-		// }
+		filesOS[file], err = os.Stat(file)
+		if err != nil {
+			fmt.Print(err)
+		}
 	}
-	return filesOS
+	return (filesOS)
+}
+
+func zipArchiveDir(rootDir string) bool {
+	zipDir := rootDir + ".zip"
+	if cap(findDir(rootDir)) > 0 {
+
+		// Get a Buffer to Write To
+		outFile, err := os.Create(zipDir)
+		if err != nil {
+			fmt.Println(err)
+			return false
+		}
+		defer outFile.Close()
+
+		// Create a new zip archive.
+		w := zip.NewWriter(outFile)
+		addFilesErr := addFiles(w, rootDir, "")
+		// Add some files to the archive.
+
+		if err != nil {
+			fmt.Println(err)
+			return false
+		}
+
+		// Make sure to check the error on Close.
+		err = w.Close()
+		if addFilesErr != nil {
+
+			return false
+		}
+		if err != nil {
+			fmt.Println(err)
+			return false
+		}
+		return true
+	}
+	return false
+}
+
+func addFiles(w *zip.Writer, basePath, baseInZip string) error {
+
+	files, err := ioutil.ReadDir(basePath)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	for _, file := range files {
+		// fmt.Println(basePath + "/" + file.Name())
+		if !file.IsDir() {
+
+			if strings.Contains(file.Name(), ".jpg") ||
+				strings.Contains(file.Name(), ".jpeg") ||
+				strings.Contains(file.Name(), ".png") ||
+				strings.Contains(file.Name(), ".webp") {
+
+				dat, err := ioutil.ReadFile(basePath + "/" + file.Name())
+				if err != nil {
+					fmt.Println(err)
+					return err
+				}
+
+				// Add some files to the archive.
+				f, err := w.Create(baseInZip + file.Name())
+				if err != nil {
+					fmt.Println(err)
+					return err
+				}
+				_, err = f.Write(dat)
+				if err != nil {
+					fmt.Println(err)
+					return err
+				}
+			}
+
+		} else if file.IsDir() {
+
+			// Recurse
+			newBase := basePath + file.Name() + "/"
+
+			err := addFiles(w, newBase, baseInZip+file.Name()+"/")
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return err
+}
+
+func findDir(rootDir string) []fs.FileInfo {
+	files, err := ioutil.ReadDir(rootDir)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return files
+}
+
+func convDir(rootDir string) string {
+	return strings.ReplaceAll(rootDir, "\\", "/")
 }
