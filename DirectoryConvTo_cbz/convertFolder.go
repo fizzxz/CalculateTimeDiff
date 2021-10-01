@@ -6,35 +6,60 @@ import (
 	"fmt"
 	"io/fs"
 	"io/ioutil"
+	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/karrick/godirwalk"
-
 	"github.com/saracen/fastzip"
+	"github.com/urfave/cli"
 )
-
-var err error
 
 const (
 	fastZipCompression = "fz"
 	glZipCompression   = "gz"
 )
 
+var (
+	app = cli.NewApp()
+	err error
+)
+
+func info() {
+	app.Name = "Image dir conversion to cbz"
+	app.Usage = "Provide a root dir that contains folders for the application to convert to cbz"
+	app.Authors = []*cli.Author{{Name: "Fizzxz", Email: "faisalk96@outlook.com"}}
+	app.Version = "0.0.1"
+}
+func commands() {
+	app.Commands = []*cli.Command{
+		{
+			Name:    "convert",
+			Aliases: []string{"c", "conv", "convert"},
+			Usage:   "Uses provided values to convert a dir into cbz",
+			Flags: []cli.Flag{
+				&cli.StringFlag{Name: "dir", Value: "", Usage: "root dir to convert to cbz"},
+				&cli.StringFlag{Name: "compression", Usage: "compression type to use," +
+					"default fastZip(fz), other option is golang zip(gz)", Value: ""},
+			},
+			Action: func(c *cli.Context) error {
+				findDirToArchive(c.String("dir"), c.String("compression"))
+				return nil
+			},
+		},
+	}
+}
+
 func main() {
-	rootDir := "D:/TestFolder"
+	defer timeTrack(time.Now(), "Converting files")
+	info()
+	commands()
 
-	// Enter the root directory
-	// for where the sub directories
-	// of the image folders are located.
-
-	//Compression types,
-	//either fz(fastZipCompression)
-	//or gz (glZipCompression)
-	//default for cbz will be fz because it is faster
-	// and better implemented into this project.
-	findDirToArchive(rootDir, "")
-	// findDirToArchive(rootDir, "cbz", glZipCompression)
+	err := app.Run(os.Args)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 func findDirToArchive(rootDir, zipTypeCompression string) {
@@ -288,4 +313,9 @@ func findDir(rootDir string) []fs.FileInfo {
 
 func convDir(rootDir string) string {
 	return strings.ReplaceAll(rootDir, "\\", "/")
+}
+
+func timeTrack(start time.Time, name string) {
+	elapsed := time.Since(start)
+	log.Printf("%s took %s", name, elapsed)
 }
