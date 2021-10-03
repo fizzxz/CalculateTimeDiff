@@ -1,6 +1,8 @@
 package main
 
 import (
+	"convDirToCbz/compressionTypes"
+	"convDirToCbz/filepath"
 	"fmt"
 	"log"
 	"os"
@@ -16,17 +18,16 @@ const (
 
 var (
 	app = cli.NewApp()
-	err error
 )
 
 func info() {
 	app.Name = "Image dir conversion to cbz"
 	app.Usage = "Provide a root dir that contains folders for the application to convert to cbz"
-	app.Authors = []*cli.Author{{Name: "Fizzxz", Email: "faisalk96@outlook.com"}}
+	app.Authors = []cli.Author{{Name: "Fizzxz", Email: "faisalk96@outlook.com"}}
 	app.Version = "0.0.1"
 }
 func commands() {
-	app.Commands = []*cli.Command{
+	app.Commands = []cli.Command{
 		{
 			Name:    "convert",
 			Aliases: []string{"c", "conv", "convert"},
@@ -63,14 +64,13 @@ func findDirToArchive(rootDir, zipTypeCompression string) {
 		//fastzip and godirwalk
 		// using a ryzen 3700x
 		// can convert 1,150 Files, 58 Folders (1.04GB) in 2.6 seconds
-		subDirs := walkDir_FindSubDirs(rootDir)
-		_, subDirs = subDirs[0], subDirs[1:]
+		subDirs := filepath.GetSubDirs(rootDir)
 
 		for _, subDir := range subDirs {
-			foundImagesOSFiles := walkDir_FindImages(subDir)
-			filesOS := getOsFile(foundImagesOSFiles)
+			foundImagesOSFiles := filepath.WalkDir_FindImages(subDir)
+			filesOS := filepath.GetFileOs(foundImagesOSFiles)
 			if len(filesOS) > 0 {
-				if zipArchiveDir_FastZip(subDir, filesOS) {
+				if compressionTypes.ZipArchiveDir_FastZip(subDir, filesOS) {
 					cbzDir := subDir + ".cbz"
 					zipDir := subDir + ".zip"
 					os.Rename(zipDir, cbzDir)
@@ -84,13 +84,11 @@ func findDirToArchive(rootDir, zipTypeCompression string) {
 	// can convert 1,150 Files, 58 Folders (1.04GB) in 30 seconds
 	if zipTypeCompression == glZipCompression {
 
-		subDirs := walkDir_FindSubDirs(rootDir)
-		_, subDirs = subDirs[0], subDirs[1:]
-
+		subDirs := filepath.GetSubDirs(rootDir)
 		for _, subDir := range subDirs {
 
-			dirConv := convDir(subDir)
-			if zipArchiveDir(dirConv) {
+			dirConv := filepath.ConvDir(subDir)
+			if compressionTypes.ZipArchiveDir(dirConv) {
 				cbzDir := dirConv + ".cbz"
 				os.Rename(dirConv+".zip", cbzDir)
 			} else {

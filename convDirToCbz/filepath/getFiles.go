@@ -5,7 +5,9 @@ import (
 	"os"
 )
 
-func getFileOs(files []string) map[string]os.FileInfo {
+var err error = nil
+
+func GetFileOs(files []string) map[string]os.FileInfo {
 	filesOS := make(map[string]os.FileInfo)
 
 	for _, file := range files {
@@ -17,7 +19,8 @@ func getFileOs(files []string) map[string]os.FileInfo {
 	return (filesOS)
 }
 
-func getSubDirs(rootDir string) []string {
-	subDirs := walkDir_FindSubDirs(rootDir)
+func GetSubDirs(rootDir string) []string {
+	subDirs := WalkDir_FindSubDirs(rootDir)
 	_, subDirs = subDirs[0], subDirs[1:]
+	return subDirs
 }

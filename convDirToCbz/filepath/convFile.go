@@ -5,12 +5,12 @@ import (
 	"strings"
 )
 
-func renameDirToCbz(rootDir string) {
+func RenameDirToCbz(rootDir string) {
 	cbzDir := rootDir + ".cbz"
 	zipDir := rootDir + ".zip"
 	os.Rename(zipDir, cbzDir)
 }
 
-func convDir(rootDir string) string {
+func ConvDir(rootDir string) string {
 	return strings.ReplaceAll(rootDir, "\\", "/")
 }

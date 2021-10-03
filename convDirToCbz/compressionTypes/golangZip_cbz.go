@@ -10,9 +10,9 @@ import (
 	"convDirToCbz/filepath"
 )
 
-func zipArchiveDir(rootDir string) bool {
+func ZipArchiveDir(rootDir string) bool {
 	zipDir := rootDir + ".zip"
-	if cap(dirWalk.FindDir(rootDir)) > 0 {
+	if cap(filepath.FindDir(rootDir)) > 0 {
 
 		// Get a Buffer to Write To
 		outFile, err := os.Create(zipDir)

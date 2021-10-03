@@ -8,7 +8,7 @@ import (
 	"github.com/saracen/fastzip"
 )
 
-func zipArchiveDir_FastZip(rootDir string, filesOS map[string]os.FileInfo) bool {
+func ZipArchiveDir_FastZip(rootDir string, filesOS map[string]os.FileInfo) bool {
 	// Create archive file
 	zipDir := rootDir + ".zip"
 
