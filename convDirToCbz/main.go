@@ -71,9 +71,7 @@ func findDirToArchive(rootDir, zipTypeCompression string) {
 			filesOS := filepath.GetFileOs(foundImagesOSFiles)
 			if len(filesOS) > 0 {
 				if compressionTypes.ZipArchiveDir_FastZip(subDir, filesOS) {
-					cbzDir := subDir + ".cbz"
-					zipDir := subDir + ".zip"
-					os.Rename(zipDir, cbzDir)
+					filepath.RenameDirToCbz(subDir)
 				}
 			}
 		}
@@ -89,8 +87,7 @@ func findDirToArchive(rootDir, zipTypeCompression string) {
 
 			dirConv := filepath.ConvDir(subDir)
 			if compressionTypes.ZipArchiveDir(dirConv) {
-				cbzDir := dirConv + ".cbz"
-				os.Rename(dirConv+".zip", cbzDir)
+				filepath.RenameDirToCbz(dirConv)
 			} else {
 				//Remove the created empty zip file
 				//when a failed conversion occurs
