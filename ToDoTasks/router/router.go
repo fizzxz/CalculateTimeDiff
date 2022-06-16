@@ -1,7 +1,7 @@
 package router
 
 import (
-	"../database"
+	"Database/database"
 	"github.com/gorilla/mux"
 )
 

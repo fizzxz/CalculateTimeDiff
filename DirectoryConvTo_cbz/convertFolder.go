@@ -29,11 +29,11 @@ var (
 func info() {
 	app.Name = "Image dir conversion to cbz"
 	app.Usage = "Provide a root dir that contains folders for the application to convert to cbz"
-	app.Authors = []*cli.Author{{Name: "Fizzxz", Email: "faisalk96@outlook.com"}}
+	app.Authors = []cli.Author{{Name: "Fizzxz", Email: "faisalk96@outlook.com"}}
 	app.Version = "0.0.1"
 }
 func commands() {
-	app.Commands = []*cli.Command{
+	app.Commands = []cli.Command{
 		{
 			Name:    "convert",
 			Aliases: []string{"c", "conv", "convert"},

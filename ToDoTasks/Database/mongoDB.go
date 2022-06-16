@@ -10,8 +10,9 @@ import (
 
 	"net/http"
 
-	"../taskFunctions"
 	"github.com/gorilla/mux"
+
+	"TaskFunctions/taskFunctions"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

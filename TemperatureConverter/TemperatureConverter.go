@@ -3,6 +3,7 @@ package main
 import "fmt"
 
 func main() {
+
 	var celciusVal float64 = 0
 	fahrConvFromCelc := tempConvFromCelciusToFahrenheit(celciusVal)
 	kelvinConvFromCelc := tempConvFromCelciusToKelvin(celciusVal)
@@ -10,6 +11,7 @@ func main() {
 	fmt.Println("Fahrenheit Value: " + fmt.Sprint(fahrConvFromCelc))
 	fmt.Println("Kelvin Value: " + fmt.Sprint(kelvinConvFromCelc))
 	fmt.Println(" ")
+
 	var fahrVal float64 = 0
 	celciusConvFromFahr := tempConvFromFahrenheitToCelcius(fahrVal)
 	kelvinConvFromFahr := tempConvFromFahrenheitToKelvin(fahrVal)
@@ -17,6 +19,7 @@ func main() {
 	fmt.Println("Celcius Value: " + fmt.Sprint(celciusConvFromFahr))
 	fmt.Println("Kelvin Value: " + fmt.Sprint(kelvinConvFromFahr))
 	fmt.Println(" ")
+
 	var kelvinVal float64 = 0
 	fahrConvFromKelv := tempConvFromKelvinToFahrenheit(kelvinVal)
 	celcConvFromKelv := tempConvFromKelvinToCelcius(kelvinVal)
