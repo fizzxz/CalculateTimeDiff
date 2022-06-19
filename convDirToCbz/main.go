@@ -67,7 +67,7 @@ func findDirToArchive(rootDir, zipTypeCompression string, comicBook bool) {
 		subDirs := filepath.GetSubDirs(rootDir)
 		for _, subDir := range subDirs {
 			foundFiles := findFiles(subDir)
-			fmt.Println(foundFiles)
+
 			if len(foundFiles) != 0 {
 				if compressionTypes.ZipArchiveDir_FastZip(subDir, foundFiles) {
 					if comicBook {
