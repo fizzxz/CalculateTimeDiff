@@ -4,62 +4,54 @@ import (
 	"fmt"
 	"io/fs"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strings"
-
-	"github.com/karrick/godirwalk"
 )
 
-func WalkDir_FindSubDirs(rootDir string) []string {
+func WalkDir_FindSubDirsInCurrDir(rootDir string) []string {
 	var dir []string
-	err := godirwalk.Walk(rootDir, &godirwalk.Options{
-		Callback: func(osPathname string, de *godirwalk.Dirent) error {
-			// Following string operation is not most performant way
-			// of doing this, but common enough to warrant a simple
-			// example here:
-			if !de.ModeType().IsDir() {
-				return godirwalk.SkipThis
+	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			rootDirCount := strings.Count(rootDir, "\\")
+			count := strings.Count(path, "\\")
+			rootDirCount++
+			if rootDirCount == count {
+				dir = append(dir, path)
+			} else {
+				return nil
 			}
-			dir = append(dir, osPathname)
-
-			return nil
-		},
-		Unsorted: true, // (optional) set true for faster yet non-deterministic enumeration (see godoc)
+		}
+		if err != nil {
+			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+			return err
+		}
+		return nil
 	})
 	if err != nil {
-		fmt.Print(err)
+		fmt.Printf("walk error [%v]\n", err)
 	}
 	return dir
 }
 
-func WalkDir_FindImages(rootDir string) []string {
+func WalkDir_FindFiles(rootDir string) []string {
 	// Walk directory, adding the files we want to add
 
 	var files []string
-	dirLevel := strings.Count(rootDir, "\\")
-	err := godirwalk.Walk(rootDir, &godirwalk.Options{
-		Callback: func(subPathname string, de *godirwalk.Dirent) error {
-			// Following string operation is not most performant way
-			// of doing this, but common enough to warrant a simple
-			// example here:
-			subDirVal := strings.Count(subPathname, "\\")
-			if dirLevel == subDirVal-1 {
-				if strings.Contains(subPathname, ".jpg") ||
-					strings.Contains(subPathname, ".jpeg") ||
-					strings.Contains(subPathname, ".png") ||
-					strings.Contains(subPathname, ".webp") {
-					files = append(files, subPathname)
-				}
-			}
-
-			return nil
-		},
-		Unsorted: true, // (optional) set true for faster yet non-deterministic enumeration (see godoc)
+	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
+		if !info.IsDir() {
+			files = append(files, path)
+		}
+		if err != nil {
+			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+			return err
+		}
+		return nil
 	})
 	if err != nil {
-		fmt.Print(err)
+		fmt.Printf("walk error [%v]\n", err)
 	}
 	return files
-
 }
 
 func FindDir(rootDir string) []fs.FileInfo {
@@ -67,6 +59,5 @@ func FindDir(rootDir string) []fs.FileInfo {
 	if err != nil {
 		fmt.Println(err)
 	}
-
 	return files
 }

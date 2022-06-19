@@ -20,7 +20,6 @@ func GetFileOs(files []string) map[string]os.FileInfo {
 }
 
 func GetSubDirs(rootDir string) []string {
-	subDirs := WalkDir_FindSubDirs(rootDir)
-	_, subDirs = subDirs[0], subDirs[1:]
+	subDirs := WalkDir_FindSubDirsInCurrDir(rootDir)
 	return subDirs
 }
