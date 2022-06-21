@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-
 	"time"
 
 	"github.com/urfave/cli"
@@ -23,7 +22,8 @@ var (
 
 func info() {
 	app.Name = "Image dir conversion to cbz"
-	app.Usage = "Provide a root dir that contains folders for the application to convert to cbz"
+	app.Usage = `Provide a root dir that contains folders for the application to convert to cbz.
+	 e.g: go run main.go c -compression gz -dir C:\Path\To\Dir -cbz false `
 	app.Authors = []cli.Author{{Name: "Fizzxz", Email: "faisalk96@outlook.com"}}
 	app.Version = "0.0.1"
 }
@@ -81,10 +81,11 @@ func findDirToArchive(rootDir, zipTypeCompression string, comicBook bool) {
 
 		subDirs := filepath.GetSubDirs(rootDir)
 		for _, subDir := range subDirs {
-
 			dirConv := filepath.ConvDir(subDir)
 			if compressionTypes.ZipArchiveDir(dirConv) {
-				filepath.RenameDirToCbz(dirConv)
+				if comicBook {
+					filepath.RenameDirToCbz(dirConv)
+				}
 			} else {
 				//Remove the created empty zip file
 				//when a failed conversion occurs
